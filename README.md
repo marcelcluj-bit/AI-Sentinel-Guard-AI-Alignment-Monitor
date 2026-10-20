@@ -30,4 +30,13 @@ AI-Sentinel-Guard-AI-Alignment-Monitor/
 \📜 License
 Distributed under the MIT License. Free for public research, open-source integration, and DePIN / AI governance development.
 
-## 
+
+
+ ## 💖 Support the Project
+
+If you find this project useful and want to support its continuous development, consider sponsoring:
+
+* **[GitHub Sponsors](https://github.com/sponsors/marcelcluj-bit)** (Recommended for recurring support & badges)
+* **[PayPal / Card Direct Donation](https://paypal.me/marcelcluj)** (For one-time or direct card contributions)
+
+Your support helps maintain open-source architecture, security audits, and continuous updates!
