@@ -26,3 +26,8 @@ AI-Sentinel-Guard-AI-Alignment-Monitor/
 │   └── deploy_guardian.js
 ├── LICENSE
 └── README.md
+---
+\📜 License
+Distributed under the MIT License. Free for public research, open-source integration, and DePIN / AI governance development.
+
+## 
