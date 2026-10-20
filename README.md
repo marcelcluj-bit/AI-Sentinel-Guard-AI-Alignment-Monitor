@@ -13,3 +13,16 @@ As Large Language Models (LLMs) and Autonomous AI Agents gain agency to interact
 ---
 
 ## 🏗️ System Architecture
+
+
+AI-Sentinel-Guard-AI-Alignment-Monitor/
+├── contracts/
+│   └── AIGuardian.sol
+├── sentinel/
+│   ├── __init__.py
+│   ├── interceptor.py
+│   └── drift_analyzer.py
+├── scripts/
+│   └── deploy_guardian.js
+├── LICENSE
+└── README.md
