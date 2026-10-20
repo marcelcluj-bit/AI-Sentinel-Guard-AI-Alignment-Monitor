@@ -1,0 +1,132 @@
+┌─────────────────────────┐
+                   │   Target AI Agent /     │
+                   │   Autonomous LLM        │
+                   └────────────┬────────────┘
+                                │
+                                │ Intercepts Prompt / Tool Call
+                                ▼
+                   ┌─────────────────────────┐
+                   │  Gatekeeper Sentinel    │ ◄── [ XAI & Drift Analysis ]
+                   │  (Policy Enforcement)   │ ◄── [ Pre-Execution Verification ]
+                   └────────────┬────────────┘
+                                │
+         ┌──────────────────────┴──────────────────────┐
+         │ Safe / Aligned                              │ Unsafe / Anomaly
+         ▼                                             ▼
+┌─────────────────────────┐                   ┌─────────────────────────┐
+│ Execute Requested Action│                   │ Trigger Emergency       │
+└────────────┬────────────┘                   │ Kill-Switch / Lockdown  │
+│                                └────────────┬────────────┘
+│ Record Execution                            │
+└──────────────────────┬──────────────────────┘
+│
+▼
+┌─────────────────────────┐
+│ Smart Contract Audit    │
+│ Ledger (Immutable Logs) │
+└─────────────────────────┘
+
+
+---
+
+## 🔑 Key Features
+
+### 1. 👁️ Real-Time Behavioral Guardrails & XAI Audit
+- **Explainable AI (XAI) Parsing:** Evaluates agent reasoning paths before tool or API execution.
+- **Goal Drift & Anomaly Detection:** Intercepts vector embeddings and output tokens to detect deviations from the system instructions.
+- **Scope & Privilege Enforcement:** Prevents agents from modifying system files, accessing unauthorized environment variables, or executing dangerous shell scripts.
+
+### 2. ⚡ Autonomous "Gatekeeper" Sentinel Agent
+- Runs on an isolated, lightweight LLM layer trained strictly on safety constraints and policy enforcement.
+- Evaluates inputs and outputs in parallel without introducing significant latency to the main agent loop.
+
+### 3. 🚨 On-Chain Emergency Kill-Switch (`AIGuardian.sol`)
+- Smart contract layer that tracks agent heartbeat and behavioral compliance metrics.
+- In case of critical failure or unauthorized boundary breach, the smart contract automatically triggers an immutable **Kill-Switch**, revoking the agent's API keys and access tokens.
+
+### 4. 🔗 Immutable On-Chain Audit Log
+- All decision hashes, system prompts, and safety verifications are hashed and stored on a decentralized ledger (EVM / Polygon / Arbitrum / Solana).
+- Ensures that no autonomous agent can modify, delete, or obscure its own execution history.
+
+---
+
+## 💻 Smart Contract Implementation (`contracts/AIGuardian.sol`)
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/**
+ * @title AIGuardian - On-Chain Audit & Emergency Kill-Switch for Autonomous AI Agents
+ */
+contract AIGuardian {
+    address public owner;
+
+    enum AgentStatus { Active, Suspended, Terminated }
+
+    struct Agent {
+        string agentId;
+        AgentStatus status;
+        uint256 lastHeartbeat;
+        uint256 violationCount;
+    }
+
+    mapping(bytes32 => Agent) public agents;
+    
+    event AgentRegistered(bytes32 indexed agentHash, string agentId);
+    event SafetyViolationLogged(bytes32 indexed agentHash, string reason, uint256 timestamp);
+    event KillSwitchTriggered(bytes32 indexed agentHash, string reason);
+    event ExecutionLogged(bytes32 indexed agentHash, bytes32 executionHash, bool passedGuardrails);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Unauthorized: Only Governance Owner");
+        _;
+    }
+
+    modifier onlyActive(bytes32 agentHash) {
+        require(agents[agentHash].status == AgentStatus.Active, "Agent is not active");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function registerAgent(string memory agentId) external onlyOwner returns (bytes32) {
+        bytes32 agentHash = keccak256(abi.encodePacked(agentId, block.timestamp));
+        agents[agentHash] = Agent({
+            agentId: agentId,
+            status: AgentStatus.Active,
+            lastHeartbeat: block.timestamp,
+            violationCount: 0
+        });
+        emit AgentRegistered(agentHash, agentId);
+        return agentHash;
+    }
+
+    function logExecution(
+        bytes32 agentHash,
+        bytes32 executionHash,
+        bool passedGuardrails,
+        string memory violationReason
+    ) external onlyActive(agentHash) {
+        agents[agentHash].lastHeartbeat = block.timestamp;
+
+        if (!passedGuardrails) {
+            agents[agentHash].violationCount += 1;
+            emit SafetyViolationLogged(agentHash, violationReason, block.timestamp);
+
+            if (agents[agentHash].violationCount >= 3) {
+                agents[agentHash].status = AgentStatus.Terminated;
+                emit KillSwitchTriggered(agentHash, "Maximum violation threshold exceeded");
+            }
+        }
+
+        emit ExecutionLogged(agentHash, executionHash, passedGuardrails);
+    }
+
+    function triggerEmergencyKillSwitch(bytes32 agentHash, string memory reason) external onlyOwner {
+        agents[agentHash].status = AgentStatus.Terminated;
+        emit KillSwitchTriggered(agentHash, reason);
+    }
+}
